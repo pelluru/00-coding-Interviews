@@ -1,0 +1,6 @@
+uid,name,email,country,signup_ts
+email@example.com,US,US,u2,2024-01-01T00:00:00Z
+p1,view,u3,p1,2024-01-01T00:00:00Z
+US,email@example.com,email@example.com,u2,2024-01-01T00:00:00Z
+view,US,US,p1,2024-01-01T00:00:00Z
+p1,US,email@example.com,email@example.com,2024-01-01T00:00:00Z

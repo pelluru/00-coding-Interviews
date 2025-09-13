@@ -1,0 +1,6 @@
+order_id,product_id,price,quantity,order_ts,tags
+u1,purchase,90.7,1,2024-01-01T00:00:00Z,
+u1,u1,88.36,5,2024-01-01T00:00:00Z,
+IN,u1,73.04,0,2024-01-01T00:00:00Z,
+purchase,purchase,50.79,0,2024-01-01T00:00:00Z,
+u1,p1,42.6,0,2024-01-01T00:00:00Z,

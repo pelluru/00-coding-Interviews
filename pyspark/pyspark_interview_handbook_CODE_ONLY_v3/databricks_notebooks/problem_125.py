@@ -1,0 +1,24 @@
+# Databricks notebook source
+# MAGIC %md
+# MAGIC # Problem 125: 125 - Performance & Tuning: Repartition challenge
+# MAGIC **Category:** Performance & Tuning
+
+# COMMAND ----------
+# MAGIC %python
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.window import Window
+spark = SparkSession.builder.getOrCreate()
+
+# COMMAND ----------
+# MAGIC %md
+# MAGIC ## Solution
+
+# COMMAND ----------
+# MAGIC %python
+from pyspark.sql import functions as F
+res = events.repartition(200, "user_id").groupBy("user_id").agg(F.count("*").alias("cnt"))
+
+# COMMAND ----------
+# MAGIC %md
+# MAGIC ## Tests
+# MAGIC - `res.count()` should run; add chispa assertions if available.

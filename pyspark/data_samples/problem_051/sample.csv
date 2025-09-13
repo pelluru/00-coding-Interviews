@@ -1,0 +1,6 @@
+uid,name,email,country,signup_ts
+IN,US,purchase,u1,2024-01-01T00:00:00Z
+US,u3,IN,u1,2024-01-01T00:00:00Z
+view,u1,p1,p1,2024-01-01T00:00:00Z
+u2,email@example.com,u3,US,2024-01-01T00:00:00Z
+u1,US,email@example.com,purchase,2024-01-01T00:00:00Z

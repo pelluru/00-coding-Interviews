@@ -1,0 +1,6 @@
+txn_id,user_id,amount,currency,ts
+u2,email@example.com,43.48,p1,2024-01-01T00:00:00Z
+US,email@example.com,5.38,u1,2024-01-01T00:00:00Z
+IN,u1,68.2,p1,2024-01-01T00:00:00Z
+email@example.com,email@example.com,16.22,u2,2024-01-01T00:00:00Z
+u1,IN,97.63,u1,2024-01-01T00:00:00Z

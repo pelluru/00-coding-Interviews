@@ -1,0 +1,6 @@
+session_id,user_id,page,referrer,ts,attrs
+US,view,purchase,p1,2024-01-01T00:00:00Z,
+p1,email@example.com,u3,u1,2024-01-01T00:00:00Z,
+purchase,u2,u1,view,2024-01-01T00:00:00Z,
+u2,u2,IN,u3,2024-01-01T00:00:00Z,
+p1,IN,view,email@example.com,2024-01-01T00:00:00Z,

@@ -1,0 +1,6 @@
+txn_id,user_id,amount,currency,ts
+purchase,purchase,57.22,IN,2024-01-01T00:00:00Z
+u2,view,21.63,u1,2024-01-01T00:00:00Z
+u2,IN,64.74,US,2024-01-01T00:00:00Z
+view,u1,50.18,purchase,2024-01-01T00:00:00Z
+p1,US,90.48,US,2024-01-01T00:00:00Z

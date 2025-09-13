@@ -1,0 +1,6 @@
+id,ts,user_id,event_type,value
+u2,2024-01-01T00:00:00Z,view,purchase,48.54
+view,2024-01-01T00:00:00Z,u3,u1,20.18
+u2,2024-01-01T00:00:00Z,u3,u1,23.67
+IN,2024-01-01T00:00:00Z,p1,US,53.87
+p1,2024-01-01T00:00:00Z,purchase,view,93.96

@@ -1,0 +1,6 @@
+order_id,product_id,price,quantity,order_ts,tags
+email@example.com,email@example.com,66.15,2,2024-01-01T00:00:00Z,
+u1,US,99.71,1,2024-01-01T00:00:00Z,
+u2,u2,29.89,3,2024-01-01T00:00:00Z,
+u3,u1,32.71,5,2024-01-01T00:00:00Z,
+p1,u2,61.42,1,2024-01-01T00:00:00Z,

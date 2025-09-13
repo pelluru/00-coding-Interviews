@@ -1,0 +1,6 @@
+id,ts,user_id,event_type,value
+p1,2024-01-01T00:00:00Z,u2,view,76.33
+u2,2024-01-01T00:00:00Z,u1,u3,86.08
+view,2024-01-01T00:00:00Z,email@example.com,u1,89.72
+u3,2024-01-01T00:00:00Z,IN,email@example.com,69.96
+u1,2024-01-01T00:00:00Z,u1,p1,71.34

@@ -1,0 +1,1 @@
+Sample CSV with 5 rows based on the problem schema. Create Parquet in Spark if needed.
