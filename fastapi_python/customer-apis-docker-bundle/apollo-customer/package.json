@@ -1,0 +1,15 @@
+{
+  "name": "apollo-customer",
+  "version": "1.0.0",
+  "description": "Customer GraphQL API using Apollo Server (standalone).",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.0",
+    "graphql": "^16.9.0",
+    "dataloader": "^2.2.2"
+  }
+}

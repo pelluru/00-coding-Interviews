@@ -1,13 +1,13 @@
 {
   "info": {
-    "name": "Items API (FastAPI)",
-    "_postman_id": "b9f2e8a1-9c1f-4d3b-9d1a-1c2d3e4f5a6b",
-    "description": "Postman collection for the Items API demo with Bearer auth and ETag flow.",
+    "name": "Customer API (FastAPI)",
+    "_postman_id": "69a0b9aa-3f18-4d9e-a213-7a5bcdbe1e77",
+    "description": "Postman collection for the Customer API demo with Bearer auth and ETag flow.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "List items",
+      "name": "List customers",
       "request": {
         "method": "GET",
         "header": [
@@ -18,18 +18,18 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/items",
+          "raw": "{{base_url}}/customers",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "items"
+            "customers"
           ]
         }
       }
     },
     {
-      "name": "Create item",
+      "name": "Create customer",
       "request": {
         "method": "POST",
         "header": [
@@ -46,21 +46,21 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"name\": \"pen\", \"price\": 2.0}"
+          "raw": "{\"first_name\": \"Ada\", \"last_name\": \"Lovelace\", \"email\": \"ada@example.com\"}"
         },
         "url": {
-          "raw": "{{base_url}}/items",
+          "raw": "{{base_url}}/customers",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "items"
+            "customers"
           ]
         }
       }
     },
     {
-      "name": "Get item by id",
+      "name": "Get customer by id",
       "request": {
         "method": "GET",
         "header": [
@@ -71,19 +71,19 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/items/1",
+          "raw": "{{base_url}}/customers/1",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "items",
+            "customers",
             "1"
           ]
         }
       }
     },
     {
-      "name": "Replace item (If-Match ETag)",
+      "name": "Replace customer (If-Match ETag)",
       "request": {
         "method": "PUT",
         "header": [
@@ -105,22 +105,22 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"name\": \"pen\", \"price\": 2.5}"
+          "raw": "{\"first_name\": \"Ada\", \"last_name\": \"Byron\", \"email\": \"ada@example.com\"}"
         },
         "url": {
-          "raw": "{{base_url}}/items/1",
+          "raw": "{{base_url}}/customers/1",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "items",
+            "customers",
             "1"
           ]
         }
       }
     },
     {
-      "name": "Delete item",
+      "name": "Delete customer",
       "request": {
         "method": "DELETE",
         "header": [
@@ -131,19 +131,18 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/items/1",
+          "raw": "{{base_url}}/customers/1",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "items",
+            "customers",
             "1"
           ]
         }
       }
     }
   ],
-  "event": [],
   "variable": [
     {
       "key": "base_url",

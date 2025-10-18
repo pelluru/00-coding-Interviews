@@ -1,0 +1,21 @@
+# Reusable queries for quick testing
+
+query All {
+  customers { id first_name last_name email phone }
+}
+
+query One($id: ID!) {
+  customer(id: $id) { id first_name last_name email }
+}
+
+mutation Create($input: CustomerIn!) {
+  createCustomer(input: $input) { id first_name email }
+}
+
+mutation Update($id: ID!, $input: CustomerIn!) {
+  updateCustomer(id: $id, input: $input) { id first_name last_name email }
+}
+
+mutation Delete($id: ID!) {
+  deleteCustomer(id: $id)
+}

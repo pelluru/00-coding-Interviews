@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  customer-rest:
+    build:
+      context: ./fastapi-customer
+      dockerfile: Dockerfile
+    container_name: customer-rest
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  customer-graphql:
+    build:
+      context: ./apollo-customer
+      dockerfile: Dockerfile
+    container_name: customer-graphql
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
