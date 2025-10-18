@@ -1,0 +1,161 @@
+{
+  "info": {
+    "name": "Items API (FastAPI)",
+    "_postman_id": "b9f2e8a1-9c1f-4d3b-9d1a-1c2d3e4f5a6b",
+    "description": "Postman collection for the Items API demo with Bearer auth and ETag flow.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List items",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create item",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\": \"pen\", \"price\": 2.0}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get item by id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/items/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Replace item (If-Match ETag)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "If-Match",
+            "value": "{{etag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\": \"pen\", \"price\": 2.5}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete item",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/items/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "1"
+          ]
+        }
+      }
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": "REPLACE_WITH_JWT"
+    },
+    {
+      "key": "etag",
+      "value": "REPLACE_WITH_ETAG"
+    }
+  ]
+}
