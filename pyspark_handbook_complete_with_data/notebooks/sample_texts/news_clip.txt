@@ -1,0 +1,1 @@
+Data pipelines scale better with partitioning and predicate pushdown in modern data lakes.
