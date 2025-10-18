@@ -1,0 +1,27 @@
+"""
+Question 178: Performance Debugging with UI & Query Plans: Advanced Task on `metrics`
+
+Pure PySpark solution scaffold with detailed comments.
+Auto-extracted from the handbook. Replace placeholders and adjust inputs.
+
+Best Practices Notes:
+- Prefer built-in SQL functions over Python UDFs for performance.
+- Use AQE (`spark.sql.adaptive.enabled=true`) to mitigate skew and auto-optimize joins.
+- For streaming, always define watermarks and deterministic sinks (foreachBatch + MERGE).
+- Validate with pytest + chispa; profile tasks/skew in the Spark UI.
+"""
+from pyspark.sql import SparkSession, functions as F, Window as W
+
+spark = (SparkSession.builder
+         .appName("PySpark_Question_178")
+         .getOrCreate())
+
+# Example placeholder inputs:
+# df = spark.read.parquet("/path/to/fact")
+# dim = spark.read.parquet("/path/to/dim")
+# streaming_df = (spark.readStream.format("json").schema("...").load("/path/to/stream"))
+
+# ---- Solution code from handbook ----
+
+df_explain = df.select("order_id", "latency_ms").groupBy("order_id").agg(F.sum("latency_ms"))
+print(df_explain._jdf.queryExecution().toString())

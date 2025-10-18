@@ -1,0 +1,35 @@
+[
+  {
+    "customer_id": "c1",
+    "profile": {
+      "name": "Alice",
+      "age": 29
+    },
+    "orders": [
+      {
+        "order_id": "o1",
+        "amount": 120.5,
+        "ordered_at": "2024-06-16T10:00:00"
+      },
+      {
+        "order_id": "o3",
+        "amount": 30.0,
+        "ordered_at": "2024-07-02T09:00:00"
+      }
+    ]
+  },
+  {
+    "customer_id": "c2",
+    "profile": {
+      "name": "Bob",
+      "age": 34
+    },
+    "orders": [
+      {
+        "order_id": "o2",
+        "amount": 89.0,
+        "ordered_at": "2024-07-01T11:00:00"
+      }
+    ]
+  }
+]

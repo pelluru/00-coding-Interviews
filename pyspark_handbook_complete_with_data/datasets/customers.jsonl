@@ -1,0 +1,5 @@
+{"customer_id": "c1", "name": "Alice", "email": "alice@example.com", "signup_ts": "2024-06-15T12:00:00", "age": 29, "is_premium": true}
+{"customer_id": "c2", "name": "Bob", "email": "bob@example.co.uk", "signup_ts": "2024-07-01T10:30:00", "age": 34, "is_premium": false}
+{"customer_id": "c3", "name": "Chen", "email": "chen@example.cn", "signup_ts": "2025-01-11T09:15:00", "age": 41, "is_premium": true}
+{"customer_id": "c4", "name": "Dia", "email": "dia@example.in", "signup_ts": "2025-03-29T16:45:00", "age": 22, "is_premium": false}
+{"customer_id": "c5", "name": "Ed", "email": "ed@example.com", "signup_ts": "2025-04-10T08:05:00", "age": 27, "is_premium": false}

@@ -1,0 +1,6 @@
+customer_id,name,email,signup_date,country,spend
+c1,Alice,alice@example.com,2024-06-15,US,120.50
+c2,Bob,bob@example.co.uk,2024-07-01,UK,89.00
+c3,Chen,chen@example.cn,2025-01-11,US,230.75
+c4,Dia,dia@example.in,2025-03-29,IN,35.20
+c5,Ed,ed@example.com,2025-04-10,CA,0.00

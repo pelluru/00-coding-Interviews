@@ -1,0 +1,15 @@
+<customers>
+  <customer id="c1">
+    <profile><name>Alice</name><age>29</age></profile>
+    <orders>
+      <order><order_id>o1</order_id><amount>120.5</amount></order>
+      <order><order_id>o3</order_id><amount>30.0</amount></order>
+    </orders>
+  </customer>
+  <customer id="c2">
+    <profile><name>Bob</name><age>34</age></profile>
+    <orders>
+      <order><order_id>o2</order_id><amount>89.0</amount></order>
+    </orders>
+  </customer>
+</customers>
