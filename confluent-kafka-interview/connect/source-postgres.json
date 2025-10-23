@@ -1,0 +1,29 @@
+{
+  "name": "postgres-source",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "POSTGRES_HOST",
+    "database.port": "5432",
+    "database.user": "USER",
+    "database.password": "PASSWORD",
+    "database.dbname": "DB",
+    "database.server.name": "pgserver",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_slot",
+    "publication.autocreate.mode": "filtered",
+    "tombstones.on.delete": "true",
+    "snapshot.mode": "initial",
+    "topic.prefix": "pg",
+    "transforms": "unwrap,route",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "pgserver\\.public\\.(.*)",
+    "transforms.route.replacement": "pg.$1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "SCHEMA_REGISTRY_URL",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "dlq.postgres-source",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}

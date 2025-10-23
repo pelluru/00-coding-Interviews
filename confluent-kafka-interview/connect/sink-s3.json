@@ -1,0 +1,25 @@
+{
+  "name": "s3-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.s3.S3SinkConnector",
+    "tasks.max": "2",
+    "topics": "orders",
+    "s3.bucket.name": "YOUR_BUCKET",
+    "s3.region": "us-east-1",
+    "format.class": "io.confluent.connect.s3.format.parquet.ParquetFormat",
+    "flush.size": "1000",
+    "rotate.interval.ms": "600000",
+    "storage.class": "io.confluent.connect.s3.storage.S3Storage",
+    "schema.compatibility": "BACKWARD",
+    "behavior.on.null.values": "ignore",
+    "partitioner.class": "io.confluent.connect.storage.partitioner.TimeBasedPartitioner",
+    "path.format": "year=YYYY/month=MM/day=dd/hour=HH",
+    "locale": "en_US",
+    "timezone": "UTC",
+    "timestamp.extractor": "Record",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "dlq.s3-sink",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "SCHEMA_REGISTRY_URL"
+  }
+}
