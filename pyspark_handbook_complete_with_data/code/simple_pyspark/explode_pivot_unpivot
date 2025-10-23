@@ -1,0 +1,223 @@
+# pivot_unpivot_explode_examples.py
+# ================================
+# 10 PySpark examples demonstrating pivot, unpivot (stack-style and generic),
+# and explode (arrays, maps, with/without positions), with increasing complexity.
+#
+# Each example is small, self-contained, and prints its result.
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    col, count, sum as Fsum, avg, expr, split, explode, explode_outer,
+    posexplode, arrays_zip, map_from_arrays, map_keys, map_values, array, lit,
+    when, coalesce
+)
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, MapType
+
+
+# ------------------------------------------------------------------------------
+# Example 1: Basic pivot (document-term matrix) — groupBy + pivot + count
+# ------------------------------------------------------------------------------
+def ex1_basic_pivot(spark):
+    # Algorithm:
+    # - Start with (doc_id, word) rows.
+    # - groupBy doc_id, pivot on word, aggregate count.
+    # - fill nulls with 0 (word not present in doc).
+    data = [(1, "spark"), (1, "spark"), (1, "aws"),
+            (2, "python"), (2, "aws"), (2, "spark")]
+    df = spark.createDataFrame(data, ["doc_id", "word"])
+    out = (df.groupBy("doc_id").pivot("word").count().fillna(0))
+    print("\n[Ex1] Basic Pivot (doc-term matrix)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 2: Pivot with specified values (faster) + multiple aggregations
+# ------------------------------------------------------------------------------
+def ex2_pivot_values_multi_aggs(spark):
+    # Algorithm:
+    # - Predeclare pivot values to avoid driver's distinct collection cost.
+    # - Use agg with multiple functions (sum, avg).
+    data = [("HR", "Jan", 1000), ("HR", "Feb", 1500), ("IT", "Jan", 2000),
+            ("IT", "Feb", 1800), ("IT", "Mar", 2100)]
+    df = spark.createDataFrame(data, ["dept", "month", "sales"])
+    months = ["Jan", "Feb", "Mar"]
+    out = (df.groupBy("dept")
+             .pivot("month", months)
+             .agg(Fsum("sales").alias("sum_sales"),
+                  avg("sales").alias("avg_sales"))
+             .fillna(0))
+    print("\n[Ex2] Pivot with predefined values + multiple aggs")
+    out.show(truncate=False)
+
+
+# ------------------------------------------------------------------------------
+# Example 3: Multi-key group pivot (city, dept) to summarize metrics by month
+# ------------------------------------------------------------------------------
+def ex3_multi_key_pivot(spark):
+    # Algorithm:
+    # - groupBy on multiple keys (city, dept), pivot by month, sum sales.
+    data = [("NY", "HR", "Jan", 10), ("NY", "HR", "Feb", 15),
+            ("NY", "IT", "Jan", 20), ("SF", "IT", "Jan", 25),
+            ("SF", "IT", "Feb", 18)]
+    df = spark.createDataFrame(data, ["city", "dept", "month", "sales"])
+    out = (df.groupBy("city", "dept")
+             .pivot("month")
+             .agg(Fsum("sales").alias("sales"))
+             .fillna(0))
+    print("\n[Ex3] Multi-key group pivot (city, dept)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 4: Pivot then compute derived metrics (post-processing)
+# ------------------------------------------------------------------------------
+def ex4_pivot_with_derived_metrics(spark):
+    # Algorithm:
+    # - Pivot monthly sales per product.
+    # - Compute a derived total column (post-pivot).
+    data = [("A", "Jan", 5), ("A", "Feb", 7), ("A", "Mar", 1),
+            ("B", "Jan", 3), ("B", "Mar", 4)]
+    df = spark.createDataFrame(data, ["product", "month", "units"])
+    out = (df.groupBy("product").pivot("month", ["Jan", "Feb", "Mar"])
+             .agg(Fsum("units").alias("units")).fillna(0))
+    out = out.withColumn("Q1_total", col("Jan_units") + col("Feb_units") + col("Mar_units"))
+    print("\n[Ex4] Pivot with derived metric (Q1_total)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 5: Pre-filter before pivot to reduce cardinality / cost
+# ------------------------------------------------------------------------------
+def ex5_filter_before_pivot(spark):
+    # Algorithm:
+    # - Filter out low-signal rows *before* pivoting to reduce pivot column cardinality.
+    data = [(1, "w1", 2), (1, "w2", 1), (1, "w3", 1),
+            (2, "w1", 1), (2, "w4", 10), (2, "w5", 1)]
+    df = spark.createDataFrame(data, ["doc_id", "word", "cnt"])
+    filtered = df.filter(col("cnt") >= 2)  # keep frequent terms only
+    out = (filtered.groupBy("doc_id").pivot("word").agg(Fsum("cnt")).fillna(0))
+    print("\n[Ex5] Filter before pivot (reduce cardinality)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 6: Unpivot with stack() (known columns) — wide to long
+# ------------------------------------------------------------------------------
+def ex6_unpivot_stack(spark):
+    # Algorithm:
+    # - Use stack(N, colName1, colVal1, ...) to unpivot known columns into (month, sales).
+    data = [("HR", 1000, 1500, 0), ("IT", 2000, 1800, 2100)]
+    df = spark.createDataFrame(data, ["dept", "Jan", "Feb", "Mar"])
+    out = df.select(
+        "dept",
+        expr("stack(3, 'Jan', Jan, 'Feb', Feb, 'Mar', Mar) as (month, sales)")
+    )
+    print("\n[Ex6] Unpivot with stack() (known columns)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 7: Generic unpivot (unknown columns) using arrays_zip + explode
+# ------------------------------------------------------------------------------
+def ex7_generic_unpivot(spark):
+    # Algorithm:
+    # - When wide columns are not known at code-time:
+    #   * Build arrays of column names and column values.
+    #   * arrays_zip(names, values) -> array<struct<name, val>>
+    #   * explode to long rows (name, value).
+    data = [("HR", 1000, 1500, None), ("IT", 2000, 1800, 2100)]
+    df = spark.createDataFrame(data, ["dept", "Jan", "Feb", "Mar"])
+    month_cols = [c for c in df.columns if c != "dept"]
+    name_lit_arr = array(*[lit(c) for c in month_cols])
+    val_arr = array(*[col(c) for c in month_cols])
+    zipped = arrays_zip(name_lit_arr.alias("col_name"), val_arr.alias("col_val"))
+    out = (df
+           .withColumn("kv", zipped)
+           .withColumn("kv", explode("kv"))
+           .select("dept", col("kv.col_name").alias("month"), col("kv.col_val").alias("sales")))
+    print("\n[Ex7] Generic unpivot with arrays_zip + explode (unknown columns)")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 8: explode + groupBy(count) — tokenizing sentences into words
+# ------------------------------------------------------------------------------
+def ex8_explode_words(spark):
+    # Algorithm:
+    # - Split sentences into arrays of words.
+    # - explode to rows; groupBy word; count occurrences.
+    data = [("doc1", "spark is fast"), ("doc2", "spark is powerful"), ("doc3", "spark runs on aws")]
+    df = spark.createDataFrame(data, ["doc_id", "text"])
+    words = df.select(col("doc_id"), explode(split(col("text"), r"\s+")).alias("word"))
+    word_counts = words.groupBy("word").agg(count("*").alias("cnt")).orderBy(col("cnt").desc(), col("word"))
+    print("\n[Ex8] explode words + count")
+    word_counts.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 9: posexplode (keep token positions) + windowed re-aggregation
+# ------------------------------------------------------------------------------
+def ex9_posexplode_positions(spark):
+    # Algorithm:
+    # - Use posexplode to keep the position index of each word in the sentence.
+    # - Example transform: keep only words at even positions, then count.
+    data = [("doc1", "a b c d e f"), ("doc2", "x y z")]
+    df = spark.createDataFrame(data, ["doc_id", "text"])
+    tokens = split(col("text"), r"\s+")
+    pos = df.select("doc_id", posexplode(tokens).alias("pos", "word"))
+    even = pos.filter((col("pos") % 2) == 0)
+    out = even.groupBy("word").count().orderBy(col("count").desc(), col("word"))
+    print("\n[Ex9] posexplode (keep positions) -> filter -> groupBy")
+    out.show()
+
+
+# ------------------------------------------------------------------------------
+# Example 10: Map explode + pivot round-trip (wide->long->wide)
+# ------------------------------------------------------------------------------
+def ex10_map_explode_and_pivot_roundtrip(spark):
+    # Algorithm:
+    # - Build a map<key,value> per row (e.g., month->sales).
+    # - explode the map to (k, v) rows, then later pivot back to columns.
+    data = [("HR", [ "Jan","Feb","Mar"], [1000, 1500,  0]),
+            ("IT", [ "Jan","Mar","Apr"], [2000, 2100, 50])]
+    df = spark.createDataFrame(data, ["dept", "months", "values"])
+
+    # Create a map from two arrays (months -> values)
+    mdf = df.select(
+        "dept",
+        map_from_arrays(col("months"), col("values")).alias("m")
+    )
+
+    # explode map to key/value rows
+    kv = mdf.select("dept", explode("m").alias("month", "sales"))
+    print("\n[Ex10] explode map to rows")
+    kv.show()
+
+    # pivot back to wide
+    wide = kv.groupBy("dept").pivot("month").agg(Fsum("sales")).fillna(0)
+    print("[Ex10] pivot back to wide (round-trip)")
+    wide.show()
+
+
+def main():
+    spark = (SparkSession.builder
+             .appName("PivotUnpivotExplode10Examples")
+             .getOrCreate())
+
+    # Run examples in increasing complexity
+    ex1_basic_pivot(spark)
+    ex2_pivot_values_multi_aggs(spark)
+    ex3_multi_key_pivot(spark)
+    ex4_pivot_with_derived_metrics(spark)
+    ex5_filter_before_pivot(spark)
+    ex6_unpivot_stack(spark)
+    ex7_generic_unpivot(spark)
+    ex8_explode_words(spark)
+    ex9_posexplode_positions(spark)
+    ex10_map_explode_and_pivot_roundtrip(spark)
+
+    spark.stop()
+
+
+if __name__ == "__main__":
+    main()
