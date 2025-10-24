@@ -1,0 +1,27 @@
+
+name: prabha_snowflake
+version: 1.0.0
+config-version: 2
+profile: prabha_snowflake
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+target-path: target
+clean-targets: ["target","dbt_packages"]
+
+on-run-start:
+  - "{{ log_run_start() }}"
+
+on-run-end:
+  - "{{ log_run_end() }}"
+
+models:
+  +materialized: table
+  core:
+    +schema: core
+  staging:
+    +materialized: view
+    +schema: staging

@@ -1,0 +1,13 @@
+
+prabha_postgres:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('PG_HOST','localhost') }}"
+      user: "{{ env_var('PG_USER','postgres') }}"
+      password: "{{ env_var('PG_PASSWORD','postgres') }}"
+      port: "{{ env_var('PG_PORT','5432') }}"
+      dbname: "{{ env_var('PG_DATABASE','postgres') }}"
+      schema: "{{ env_var('PG_SCHEMA','analytics') }}"
+      threads: 4

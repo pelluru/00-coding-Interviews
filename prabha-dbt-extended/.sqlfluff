@@ -1,0 +1,15 @@
+[sqlfluff]
+templater = dbt
+dialect = postgres
+exclude_rules = L009,L031
+max_line_length = 120
+
+[sqlfluff:templater:dbt]
+project_dir = .
+
+[sqlfluff:rules]
+tab_space_size = 2
+
+# Example: relax aliasing rule for staging
+[sqlfluff:rules:aliasing.column]
+allow_scalar = True

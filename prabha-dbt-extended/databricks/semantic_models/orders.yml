@@ -1,0 +1,20 @@
+semantic_models:
+  - name: orders_semantic
+    model: ref('stg_orders')
+    entities:
+      - name: order_id
+        type: primary
+      - name: customer_id
+        type: foreign
+    measures:
+      - name: order_count
+        expr: 1
+        agg: sum
+      - name: total_revenue
+        expr: total_amount
+        agg: sum
+    dimensions:
+      - name: order_date
+        type: time
+        type_params:
+          time_granularity: day

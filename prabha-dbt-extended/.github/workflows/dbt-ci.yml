@@ -1,0 +1,109 @@
+name: dbt CI (multi-target)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: "Run seeds/run/test (requires connection secrets)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false","true"]
+
+jobs:
+  parse:
+    name: Parse — ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [databricks, postgres, snowflake]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: dbt deps + parse
+        working-directory: ${{ matrix.project }}
+        env:
+          DBT_PROFILES_DIR: ${{ github.workspace }}/${{ matrix.project }}
+        run: |
+          dbt deps
+          dbt parse
+
+  run-tests:
+    name: Run & Test — ${{ matrix.project }}
+    if: ${{ github.event.inputs.run_tests == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [databricks, postgres, snowflake]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Configure env for adapter
+        id: envprep
+        run: |
+          echo "Configuring env for ${{ matrix.project }}"
+        env:
+          # Databricks (set these secrets in repo settings when running Databricks job)
+          DBR_HOST: ${{ secrets.DBR_HOST }}
+          DBR_HTTP_PATH: ${{ secrets.DBR_HTTP_PATH }}
+          DBR_TOKEN: ${{ secrets.DBR_TOKEN }}
+          DBR_CATALOG: ${{ secrets.DBR_CATALOG }}
+          DBR_SCHEMA: ${{ secrets.DBR_SCHEMA }}
+          # Postgres
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_PORT: ${{ secrets.PG_PORT }}
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_DATABASE: ${{ secrets.PG_DATABASE }}
+          PG_SCHEMA: ${{ secrets.PG_SCHEMA }}
+          # Snowflake
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+
+      - name: dbt deps / seed / run / test
+        working-directory: ${{ matrix.project }}
+        env:
+          DBT_PROFILES_DIR: ${{ github.workspace }}/${{ matrix.project }}
+          # Pass-through adapter envs (already populated via secrets)
+          DBR_HOST: ${{ secrets.DBR_HOST }}
+          DBR_HTTP_PATH: ${{ secrets.DBR_HTTP_PATH }}
+          DBR_TOKEN: ${{ secrets.DBR_TOKEN }}
+          DBR_CATALOG: ${{ secrets.DBR_CATALOG }}
+          DBR_SCHEMA: ${{ secrets.DBR_SCHEMA }}
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_PORT: ${{ secrets.PG_PORT }}
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_DATABASE: ${{ secrets.PG_DATABASE }}
+          PG_SCHEMA: ${{ secrets.PG_SCHEMA }}
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+        run: |
+          dbt deps
+          dbt seed --full-refresh
+          dbt run
+          dbt test

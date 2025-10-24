@@ -1,0 +1,14 @@
+metrics:
+  - name: m_orders
+    type: simple
+    label: "Orders"
+    type_params:
+      measure: order_count
+    semantic_model: orders_semantic
+
+  - name: m_total_revenue
+    type: simple
+    label: "Total Revenue"
+    type_params:
+      measure: total_revenue
+    semantic_model: orders_semantic

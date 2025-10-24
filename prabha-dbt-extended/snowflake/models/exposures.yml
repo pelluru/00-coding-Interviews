@@ -1,0 +1,14 @@
+version: 2
+
+exposures:
+  - name: customer_kpis_dashboard
+    type: dashboard
+    maturity: medium
+    owner:
+      name: DataImpulseTek
+      email: analytics@example.com
+    url: https://bi.example.com/dashboards/customer-kpis
+    description: KPI dashboard powered by stg_orders and dim_customers
+    depends_on:
+      - ref('stg_orders')
+      - ref('dim_customers')

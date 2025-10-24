@@ -1,0 +1,23 @@
+
+version: 2
+sources:
+  - name: app
+    tables:
+      - name: orders_raw
+      - name: customers_raw
+
+# Freshness configuration
+# Assumes a column `order_ts` exists on orders_raw and a `created_at` on customers_raw for demo.
+sources:
+  - name: app
+    tables:
+      - name: orders_raw
+        loaded_at_field: order_ts
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+      - name: customers_raw
+        loaded_at_field: created_at
+        freshness:
+          warn_after: {count: 72, period: hour}
+          error_after: {count: 96, period: hour}

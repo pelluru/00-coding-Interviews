@@ -1,0 +1,14 @@
+
+prabha_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SF_ACCOUNT') }}"
+      user: "{{ env_var('SF_USER') }}"
+      password: "{{ env_var('SF_PASSWORD') }}"
+      role: "{{ env_var('SF_ROLE','SYSADMIN') }}"
+      warehouse: "{{ env_var('SF_WAREHOUSE','TRANSFORMING') }}"
+      database: "{{ env_var('SF_DATABASE','ANALYTICS') }}"
+      schema: "{{ env_var('SF_SCHEMA','PUBLIC') }}"
+      threads: 4
