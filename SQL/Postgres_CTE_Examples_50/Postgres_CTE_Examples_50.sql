@@ -376,3 +376,359 @@ LEFT JOIN avg_sal a      ON a.dept_id = d.id
 ORDER BY department;
 -- Expected: one row per department with combined KPIs.
 -- =====================================================================
+
+
+-- =====================================================================
+-- EXTENDED: 30 MORE CTE EXAMPLES (21..50)
+-- Each block is heavily commented and includes expected output guidance.
+-- =====================================================================
+
+-- 21) LATERAL JOIN with CTE to pick top-N products by price
+WITH ranked AS (
+  SELECT p.*, ROW_NUMBER() OVER (ORDER BY price DESC) AS rn
+  FROM products p
+)
+SELECT id, name, price
+FROM ranked
+WHERE rn <= 3
+ORDER BY price DESC;
+-- Expected: top 3 most expensive products
+
+-- 22) CTE generating a small calendar and joining sales per day
+WITH days AS (
+  SELECT d::date AS day
+  FROM generate_series('2025-01-01'::date, '2025-03-31'::date, interval '1 day') AS gs(d)
+),
+sales_by_day AS (
+  SELECT sale_date AS day, SUM(amount) AS total
+  FROM sales GROUP BY sale_date
+)
+SELECT day, COALESCE(total,0) AS total
+FROM days
+LEFT JOIN sales_by_day USING (day)
+ORDER BY day
+LIMIT 15;
+-- Expected: first 15 days with totals (zeros for days without sales)
+
+-- 23) PIVOT-like conditional aggregates inside a CTE
+WITH by_category AS (
+  SELECT
+    SUM(CASE WHEN category='Hardware' THEN price END) AS hw_price_sum,
+    SUM(CASE WHEN category='Service'  THEN price END) AS svc_price_sum
+  FROM products
+)
+SELECT * FROM by_category;
+-- Expected: sums of prices by category
+
+-- 24) UNPIVOT style via UNION ALL from a CTE
+WITH by_category AS (
+  SELECT
+    SUM(CASE WHEN category='Hardware' THEN price END) AS hw_price_sum,
+    SUM(CASE WHEN category='Service'  THEN price END) AS svc_price_sum
+  FROM products
+)
+SELECT 'Hardware' AS category, hw_price_sum AS total FROM by_category
+UNION ALL
+SELECT 'Service', svc_price_sum FROM by_category;
+-- Expected: two rows: Hardware, Service
+
+-- 25) Moving average (7-day) of sales totals
+WITH daily AS (
+  SELECT sale_date::date AS day, SUM(amount) AS total
+  FROM sales GROUP BY sale_date
+), ma AS (
+  SELECT day, total,
+         AVG(total) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS ma7
+  FROM daily
+)
+SELECT * FROM ma ORDER BY day;
+-- Expected: moving average column for days with sales
+
+-- 26) Gaps and islands (sales streaks by employee)
+WITH emp_days AS (
+  SELECT emp_id, sale_date::date AS day FROM sales GROUP BY emp_id, sale_date
+), numbered AS (
+  SELECT emp_id, day,
+         ROW_NUMBER() OVER (PARTITION BY emp_id ORDER BY day) AS rn
+  FROM emp_days
+), groups AS (
+  SELECT emp_id, day, (day - (rn||' days')::interval)::date AS grp
+  FROM numbered
+)
+SELECT emp_id, MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS len
+FROM groups
+GROUP BY emp_id, grp
+ORDER BY emp_id, start_day;
+-- Expected: contiguous date ranges per emp_id
+
+-- 27) Sessionization by 14-day inactivity gap (per employee)
+WITH ordered AS (
+  SELECT emp_id, sale_date::timestamp AS ts,
+         LAG(sale_date) OVER (PARTITION BY emp_id ORDER BY sale_date) AS prev_ts
+  FROM sales
+), flagged AS (
+  SELECT emp_id, ts::date AS day,
+         CASE WHEN prev_ts IS NULL OR ts - prev_ts > INTERVAL '14 days' THEN 1 ELSE 0 END AS new_session
+  FROM ordered
+), sessions AS (
+  SELECT emp_id, day,
+         SUM(new_session) OVER (PARTITION BY emp_id ORDER BY day) AS session_id
+  FROM flagged
+)
+SELECT emp_id, MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days_in_session
+FROM sessions
+GROUP BY emp_id, session_id
+ORDER BY emp_id, start_day;
+-- Expected: grouped sessions per employee
+
+-- 28) Percentiles via window function
+WITH totals AS (
+  SELECT emp_id, SUM(amount) AS total FROM sales GROUP BY emp_id
+), pct AS (
+  SELECT emp_id, total,
+         PERCENT_RANK() OVER (ORDER BY total) AS pct_rank
+  FROM totals
+)
+SELECT * FROM pct ORDER BY total DESC;
+-- Expected: employees with total sales and their percentile ranks
+
+-- 29) Deduplicate to latest row per employee-day
+WITH base AS (
+  SELECT emp_id, sale_date, amount,
+         ROW_NUMBER() OVER (PARTITION BY emp_id, sale_date ORDER BY id DESC) AS rn
+  FROM sales
+)
+SELECT emp_id, sale_date, amount
+FROM base WHERE rn=1
+ORDER BY emp_id, sale_date;
+-- Expected: one row per emp_id+date (latest by id)
+
+-- 30) Type-2 style change detection (salary changes by employee over time)
+WITH salaried AS (
+  SELECT id AS emp_id, name, salary,
+         ROW_NUMBER() OVER (ORDER BY id) AS rownum
+  FROM employees
+), changes AS (
+  SELECT s1.emp_id, s1.name, s1.salary AS current_salary,
+         LAG(s1.salary) OVER (ORDER BY s1.emp_id) AS prev_salary,
+         (s1.salary <> LAG(s1.salary) OVER (ORDER BY s1.emp_id)) AS changed
+  FROM salaried s1
+)
+SELECT * FROM changes;
+-- Expected: boolean column 'changed' true for salary transitions (artificial demo)
+
+-- 31) Recursive numbers with step 5
+WITH RECURSIVE seq(n) AS (
+  SELECT 0
+  UNION ALL
+  SELECT n+5 FROM seq WHERE n < 50
+)
+SELECT * FROM seq;
+-- Expected: 0,5,10,...,50
+
+-- 32) Bill of Materials style recursion example (self-join employees as org chart depth)
+WITH RECURSIVE org AS (
+  SELECT id, name, manager_id, 0 AS depth FROM employees WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, o.depth+1
+  FROM employees e JOIN org o ON e.manager_id = o.id
+)
+SELECT * FROM org ORDER BY depth, name;
+-- Expected: all employees with depth from top managers
+
+-- 33) Reachability matrix (ancestor relationships) for employees
+WITH RECURSIVE anc AS (
+  SELECT id AS emp_id, id AS ancestor_id FROM employees
+  UNION ALL
+  SELECT e.id, a.ancestor_id
+  FROM employees e
+  JOIN anc a ON e.manager_id = a.emp_id
+)
+SELECT * FROM anc ORDER BY emp_id, ancestor_id LIMIT 20;
+-- Expected: rows mapping employee -> each ancestor in chain
+
+-- 34) Path strings using array_agg and recursion (employee chain labels)
+WITH RECURSIVE paths AS (
+  SELECT id, name, manager_id, ARRAY[name] AS path_names FROM employees WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, p.path_names || e.name
+  FROM employees e JOIN paths p ON e.manager_id = p.id
+)
+SELECT id, array_to_string(path_names, ' > ') AS path
+FROM paths ORDER BY id;
+-- Expected: breadcrumb-like strings
+
+-- 35) Upsert pattern using CTE and ON CONFLICT
+WITH aggregated AS (
+  SELECT emp_id, SUM(amount)::numeric(12,2) AS total FROM sales GROUP BY emp_id
+)
+INSERT INTO emp_awards (emp_id, remarks)
+SELECT emp_id, 'Award: exceeded 4000' FROM aggregated WHERE total >= 4000
+ON CONFLICT (emp_id) DO UPDATE SET remarks = 'Award: exceeded 4000';
+-- Expected: insert or update awards where applicable
+
+-- 36) Partitioned aggregates and percent-of-total
+WITH dept_sales AS (
+  SELECT d.name AS dept, SUM(s.amount) AS total
+  FROM departments d
+  JOIN employees e ON e.dept_id = d.id
+  LEFT JOIN sales s ON s.emp_id = e.id
+  GROUP BY d.name
+), pct AS (
+  SELECT dept, total, total * 100.0 / NULLIF(SUM(total) OVER (),0) AS pct_of_all
+  FROM dept_sales
+)
+SELECT * FROM pct ORDER BY total DESC NULLS LAST;
+-- Expected: each department's share of all sales
+
+-- 37) ROW_NUMBER vs RANK vs DENSE_RANK demo
+WITH totals AS (
+  SELECT e.id, e.name, COALESCE(SUM(s.amount),0) AS total
+  FROM employees e LEFT JOIN sales s ON s.emp_id = e.id
+  GROUP BY e.id, e.name
+)
+SELECT name, total,
+       ROW_NUMBER() OVER (ORDER BY total DESC) AS rownum,
+       RANK()       OVER (ORDER BY total DESC) AS rnk,
+       DENSE_RANK() OVER (ORDER BY total DESC) AS drnk
+FROM totals ORDER BY total DESC, name;
+-- Expected: show tie behaviors across three ranking functions
+
+-- 38) Window frames (trailing 2 rows) on daily sales
+WITH daily AS (
+  SELECT sale_date AS day, SUM(amount) AS total
+  FROM sales GROUP BY sale_date
+), framed AS (
+  SELECT day, total,
+         SUM(total) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS sum_last_3
+  FROM daily
+)
+SELECT * FROM framed ORDER BY day;
+-- Expected: rolling sum of last up-to-3 days
+
+-- 39) Percent of row relative to group max
+WITH totals AS (
+  SELECT e.dept_id, e.name, COALESCE(SUM(s.amount),0) AS total
+  FROM employees e LEFT JOIN sales s ON s.emp_id=e.id
+  GROUP BY e.dept_id, e.name
+)
+SELECT *,
+       total / NULLIF(MAX(total) OVER (PARTITION BY dept_id),0) AS pct_of_dept_max
+FROM totals ORDER BY dept_id, total DESC;
+-- Expected: each employee's sales as a fraction of their dept max
+
+-- 40) Generate product pairs (self join) via CTE
+WITH prods AS (SELECT id, name FROM products)
+SELECT p1.name AS a, p2.name AS b
+FROM prods p1
+JOIN prods p2 ON p1.id < p2.id
+ORDER BY a, b
+LIMIT 15;
+-- Expected: first 15 unique product pairs
+
+-- 41) Aggregation then filter in outer query (HAVING-like separation)
+WITH dept_pay AS (
+  SELECT dept_id, AVG(salary) AS avg_salary FROM employees GROUP BY dept_id
+)
+SELECT d.name, ROUND(avg_salary,2)
+FROM dept_pay dp JOIN departments d ON d.id = dp.dept_id
+WHERE avg_salary > 100000;
+-- Expected: departments with avg salary over 100k
+
+-- 42) CTE powering DELETE with join constraints (remove orphan sales to non-existing product)
+WITH orphan_sales AS (
+  SELECT s.id FROM sales s LEFT JOIN products p ON p.id = s.product_id
+  WHERE p.id IS NULL
+)
+DELETE FROM sales WHERE id IN (SELECT id FROM orphan_sales);
+-- Expected: no change (data is consistent), but pattern is shown
+
+-- 43) JSON building per employee
+WITH emp_json AS (
+  SELECT e.id, e.name,
+         jsonb_build_object(
+             'dept', d.name,
+             'salary', e.salary,
+             'sales_total', COALESCE(SUM(s.amount),0)
+         ) AS profile
+  FROM employees e
+  JOIN departments d ON d.id = e.dept_id
+  LEFT JOIN sales s ON s.emp_id = e.id
+  GROUP BY e.id, e.name, d.name, e.salary
+)
+SELECT * FROM emp_json ORDER BY id LIMIT 5;
+-- Expected: JSONB per employee
+
+-- 44) LATERAL JSON expansion using jsonb_to_recordset
+WITH sample AS (
+  SELECT '[{"p":"Laptop Pro","qty":2},{"p":"Phone X","qty":1}]'::jsonb AS js
+)
+SELECT x.p, x.qty
+FROM sample s,
+LATERAL jsonb_to_recordset(s.js) AS x(p text, qty int);
+-- Expected: rows: (Laptop Pro,2), (Phone X,1)
+
+-- 45) Arrays + UNNEST with CTE
+WITH arrs AS (
+  SELECT ARRAY['NY','CA','TX'] AS states
+)
+SELECT unnest(states) AS state FROM arrs;
+-- Expected: NY, CA, TX
+
+-- 46) Parameterizable CTE pattern using constants CTE
+WITH params AS (
+  SELECT 120000::numeric AS cutoff
+)
+SELECT e.name, e.salary
+FROM employees e, params p
+WHERE e.salary >= p.cutoff
+ORDER BY salary DESC;
+-- Expected: employees with salary >= 120k
+
+-- 47) Distinct-on trick via CTE (latest sale per employee)
+WITH ordered AS (
+  SELECT s.*, ROW_NUMBER() OVER (PARTITION BY emp_id ORDER BY sale_date DESC, id DESC) rn
+  FROM sales s
+)
+SELECT emp_id, sale_date, amount
+FROM ordered WHERE rn=1
+ORDER BY emp_id;
+-- Expected: each employee's most recent sale
+
+-- 48) Anti-join via CTE (employees with no sales)
+WITH sellers AS (SELECT DISTINCT emp_id FROM sales)
+SELECT e.id, e.name
+FROM employees e
+LEFT JOIN sellers s ON s.emp_id = e.id
+WHERE s.emp_id IS NULL
+ORDER BY e.id;
+-- Expected: employees who never appear in sales
+
+-- 49) Semi-join via CTE (departments that have at least one sale)
+WITH depts_with_sales AS (
+  SELECT DISTINCT e.dept_id FROM sales s JOIN employees e ON e.id = s.emp_id
+)
+SELECT d.id, d.name
+FROM departments d
+JOIN depts_with_sales ds ON ds.dept_id = d.id
+ORDER BY d.id;
+-- Expected: subset of departments that have sales activity
+
+-- 50) Multi-level CTE combining ranking, JSON, and filters
+WITH totals AS (
+  SELECT e.dept_id, e.name, COALESCE(SUM(s.amount),0) AS total
+  FROM employees e LEFT JOIN sales s ON s.emp_id = e.id
+  GROUP BY e.dept_id, e.name
+), ranked AS (
+  SELECT *, RANK() OVER (PARTITION BY dept_id ORDER BY total DESC) AS rnk
+  FROM totals
+), top3 AS (
+  SELECT dept_id, name, total FROM ranked WHERE rnk <= 3
+), packed AS (
+  SELECT dept_id, json_agg(json_build_object('name',name,'total',total) ORDER BY total DESC) AS top3
+  FROM top3 GROUP BY dept_id
+)
+SELECT d.name AS department, p.top3
+FROM departments d LEFT JOIN packed p ON p.dept_id = d.id
+ORDER BY department;
+-- Expected: top-3 performers packaged as JSON per department
