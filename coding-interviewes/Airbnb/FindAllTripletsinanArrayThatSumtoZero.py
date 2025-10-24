@@ -1,84 +1,112 @@
-# Algorithm Steps
+from typing import List, Iterable, Tuple
 
-# Sort the array to enable two-pointer scanning and easy duplicate skipping.
+# ===========================================================
+# Algorithm Overview (3Sum using Two-Pointer and Sorting)
+# ===========================================================
+# 1. Sort the array to allow ordered traversal and duplicate skipping.
+# 2. Iterate each index i as the "fixed" element.
+# 3. For each i, find all pairs (l, r) such that nums[i] + nums[l] + nums[r] == 0.
+#    - Use the two-pointer approach to efficiently find pairs.
+#    - Move pointers inward depending on the sum.
+# 4. Skip duplicate values for i, l, and r to avoid duplicate triplets.
+# 5. Complexity:
+#    - Time: O(n²)  (Sorting + nested two-pointer scan)
+#    - Space: O(1)  (ignoring output)
+# ===========================================================
 
-# Iterate through each element i as a fixed number.
 
-# Use two pointers l (left) and r (right) to find pairs such that
-# nums[i] + nums[l] + nums[r] == 0.
-
-# Move pointers inward:
-
-# If sum < 0 → need a larger number ⇒ l += 1
-
-# If sum > 0 → need a smaller number ⇒ r -= 1
-
-# If sum == 0 → record triplet, then skip duplicates on both sides.
-
-# Avoid duplicates by skipping repeated values for both i, l, and r.
-
-# Complexity
-
-# Time = O(n²)
-
-# Space = O(1) (ignoring output list)
-
-def three_sum(nums):
+def _skip_dups(nums: List[int], i: int, step: int, bound: int) -> int:
     """
-    Find all unique triplets in the array that sum to zero.
-    Uses sorting + two-pointer technique.
+    Helper to move index `i` in direction `step` (+1 or -1) 
+    while skipping over duplicate values within bounds.
+    Example:
+        nums = [-1, -1, 0, 1], i=0, step=+1 → skips to index 2
     """
-    nums.sort()          # Step 1: Sort array for ordered traversal
+    j = i + step
+    while 0 <= j < bound and nums[j] == nums[i]:
+        j += step
+    return j
+
+
+def two_sum_sorted(nums: List[int], l: int, r: int, target: int) -> Iterable[Tuple[int, int]]:
+    """
+    Two-pointer search on a sorted list between indices l and r
+    to find all pairs (l, r) where nums[l] + nums[r] == target.
+
+    Steps:
+    1. Initialize left = l, right = r
+    2. While left < right:
+        - If sum == target: yield pair and skip duplicates
+        - If sum < target: move left pointer rightward
+        - If sum > target: move right pointer leftward
+    """
+    while l < r:
+        s = nums[l] + nums[r]
+        if s == target:
+            # Found a valid pair
+            yield (l, r)
+            # Skip duplicates for both pointers
+            l = _skip_dups(nums, l, +1, r)
+            r = _skip_dups(nums, r, -1, l - 1)
+        elif s < target:
+            l += 1
+        else:
+            r -= 1
+
+
+def three_sum(nums: List[int]) -> List[List[int]]:
+    """
+    Finds all unique triplets [a, b, c] in nums such that a + b + c == 0.
+
+    Algorithm:
+    1. Sort array
+    2. Iterate each element i
+    3. Use two_sum_sorted to find complement pairs
+    4. Skip duplicates and collect results
+    """
+    nums.sort()
     n = len(nums)
-    res = []
+    result: List[List[int]] = []
 
-    # Step 2: Fix the first element one by one
-    for i in range(n):
+    # Iterate each number as the fixed element
+    for i in range(n - 2):
+        # Early termination (since all numbers after are positive)
         if nums[i] > 0:
-            # No further triplet can sum to zero (since array is sorted)
             break
 
-        # Skip duplicate 'i' elements to avoid repeated triplets
+        # Skip duplicates for the fixed element
         if i > 0 and nums[i] == nums[i - 1]:
             continue
 
-        # Step 3: Two-pointer search for pairs that sum to -nums[i]
+        # Target is the negation of the fixed element
         target = -nums[i]
-        l, r = i + 1, n - 1
 
-        while l < r:
-            s = nums[l] + nums[r]
-            if s == target:
-                # Found one valid triplet
-                res.append([nums[i], nums[l], nums[r]])
+        # Find pairs (l, r) such that nums[l] + nums[r] == target
+        for l, r in two_sum_sorted(nums, i + 1, n - 1, target):
+            result.append([nums[i], nums[l], nums[r]])
 
-                # Move both pointers to look for next pair
-                l += 1
-                r -= 1
-
-                # Skip duplicates for 'l' and 'r'
-                while l < r and nums[l] == nums[l - 1]:
-                    l += 1
-                while l < r and nums[r] == nums[r + 1]:
-                    r -= 1
-
-            elif s < target:
-                # Need larger sum, move left pointer right
-                l += 1
-            else:
-                # Need smaller sum, move right pointer left
-                r -= 1
-
-    return res
+    return result
 
 
 def main():
-    print("=== 3Sum Problem ===")
-    arr = [-1, 0, 1, 2, -1, -4]
-    print("Input:", arr)
-    result = three_sum(arr)
-    print("Triplets that sum to zero:", result)
+    """
+    Driver function to test the 3Sum algorithm.
+    """
+    print("=== 3Sum Problem (Reusable Functions) ===")
+
+    # Example test cases
+    test_cases = [
+        [-1, 0, 1, 2, -1, -4],
+        [0, 0, 0, 0],
+        [-2, 0, 1, 1, 2, -1, -4, 2, -1]
+    ]
+
+    for arr in test_cases:
+        print(f"\nInput Array: {arr}")
+        triplets = three_sum(arr)
+        print(f"Triplets that sum to zero: {triplets}")
 
 
+# Standard main entry point
 if __name__ == "__main__":
     main()
