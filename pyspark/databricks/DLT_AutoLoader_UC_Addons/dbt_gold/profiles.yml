@@ -1,0 +1,11 @@
+dbt_gold:
+  target: dev
+  outputs:
+    dev:
+      type: databricks
+      catalog: "{{ env_var('DBR_CATALOG','analytics') }}"
+      schema: "{{ env_var('DBR_SCHEMA','marts') }}"
+      host: "{{ env_var('DBR_HOST') }}"
+      http_path: "{{ env_var('DBR_HTTP_PATH') }}"
+      token: "{{ env_var('DBR_TOKEN') }}"
+      threads: 4

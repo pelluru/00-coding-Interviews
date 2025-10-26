@@ -1,0 +1,11 @@
+version: 2
+models:
+  - name: fct_user_spend
+    description: "Fact table built from DLT gold aggregate"
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: total_spent_30d
+        tests: [not_null]
+      - name: txn_count_30d
+        tests: [not_null]

@@ -1,0 +1,11 @@
+version: 2
+exposures:
+  - name: bi_user_spend_dashboard
+    type: dashboard
+    maturity: medium
+    owner:
+      name: Analytics Team
+      email: analytics@example.com
+    depends_on:
+      - ref('fct_user_spend')
+    description: "User spend KPI dashboard"

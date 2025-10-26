@@ -1,0 +1,50 @@
+{
+  "name": "AutoLoader_and_DLT_Pipeline",
+  "tags": {
+    "project": "dlt-uc-pack"
+  },
+  "job_clusters": [
+    {
+      "job_cluster_key": "stream-min",
+      "new_cluster": {
+        "spark_version": "13.3.x-scala2.12",
+        "node_type_id": "auto",
+        "autoscale": {
+          "min_workers": 1,
+          "max_workers": 2
+        },
+        "data_security_mode": "SINGLE_USER",
+        "runtime_engine": "PHOTON"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "autoloader_ingest",
+      "description": "Ingest raw files into Delta (UC: raw.transactions_raw) via Auto Loader",
+      "job_cluster_key": "stream-min",
+      "spark_python_task": {
+        "python_file": "autoloader_ingest.py"
+      },
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "dlt_transform",
+      "description": "Run DLT bronze\u2192silver\u2192gold pipeline",
+      "depends_on": [
+        {
+          "task_key": "autoloader_ingest"
+        }
+      ],
+      "pipeline_task": {
+        "pipeline_id": "<REPLACE_WITH_DLT_PIPELINE_ID>"
+      }
+    }
+  ],
+  "schedule": {
+    "quartz_cron_expression": "0 0/30 * * * ?",
+    "timezone_id": "UTC",
+    "pause_status": "UNPAUSED"
+  }
+}

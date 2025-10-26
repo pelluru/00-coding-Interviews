@@ -1,0 +1,10 @@
+version: 2
+sources:
+  - name: core
+    schema: core
+    tables:
+      - name: gold_user_spend
+        loaded_at_field: last_txn_at
+        freshness:
+          warn_after: {count: 2, period: hour}
+          error_after: {count: 6, period: hour}

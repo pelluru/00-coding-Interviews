@@ -1,0 +1,24 @@
+{
+  "name": "DLT_Bronze_Silver_Gold_Pipeline",
+  "development": true,
+  "edition": "ADVANCED",
+  "channel": "CURRENT",
+  "photon": true,
+  "continuous": true,
+  "configuration": {
+    "source_path": "/mnt/raw/transactions",
+    "source_format": "json"
+  },
+  "clusters": [
+    {
+      "autoscale": { "min_workers": 1, "max_workers": 3 },
+      "label": "default"
+    }
+  ],
+  "target": "analytics.core",
+  "libraries": [
+    { "notebook": { "path": "dlt_pipeline.sql" } }
+  ],
+  "storage": "/mnt/dlt/state/bronze_silver_gold",
+  "catalog": "analytics"
+}
