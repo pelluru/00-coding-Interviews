@@ -1,0 +1,4 @@
+Spark is GREAT great Spark!
+Hadoop and Hive are big-data tools.
+Spark SQL lets you run SQL queries on DataFrames.
+Hello world spark word count example.
