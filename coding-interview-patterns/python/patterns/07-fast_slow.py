@@ -1,4 +1,7 @@
 """
+
+https://www.youtube.com/watch?v=b139yf7Ik-E
+
 Fast and Slow Pointer Algorithms on Linked Lists
 ================================================
 

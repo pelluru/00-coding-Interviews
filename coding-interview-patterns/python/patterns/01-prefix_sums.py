@@ -7,6 +7,7 @@ Prefix Sum Patterns — Three Classic Variants
 2. NumMatrix              → constant-time 2D range-sum queries
 3. apply_range_adds()     → batch range updates using diff array
 """
+https://www.youtube.com/watch?v=yuws7YK0Yng
 
 from collections import defaultdict
 from typing import List, Tuple

@@ -1,4 +1,7 @@
 """
+
+https://www.youtube.com/watch?v=DtJVwbbicjQ
+
 Monotonic Stack — Classic Patterns
 ==================================
 
